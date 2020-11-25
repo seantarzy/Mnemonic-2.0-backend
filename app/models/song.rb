@@ -1,25 +1,39 @@
 class Song < ApplicationRecord
     belongs_to :artist
+    has_many :lyric_snippets
 
     def self.seed_songs(artist_id)
         page_number=1
-        page_cap = 2
-        while(page_number <= page_cap && !!page_number) do
+        page_cap = 5
+        while(page_number <= page_cap) do
             response = RestClient.get("https://genius.com/api/artists/#{artist_id}/songs?page=#{page_number}&sort=popularity")
             response = JSON.parse(response)
             songs = response['response']['songs']
             self.create_songs(songs, artist_id)
             page_number = response['response']['next_page']
+            if !page_number
+                break
+            end
         end
     end
 
     def self.create_songs(songs, artist_id)
         songs.each do |song|
-            if !Song.find_by(title: song['title'])
-                puts "Seeding #{song['title']}..."
-                song_url = song['url']
-                lyrics = self.get_lyrics(song_url)
-                Song.create(full_title: song['full_title'], id: (artist_id.to_s + song['id'].to_s).to_i, lyrics: lyrics, artist_id: artist_id, url: song['url'], image: song["song_art_image_url"], title: song['title'])
+            # if Artist.songs.all.find(artist_id: artist_id)
+            #     next
+            # end
+            print "song id is #{song["id"]} "
+            if !Song.find_by(full_title: song["full_title"])
+                begin
+                    puts "Seeding #{song['title']}..."
+                    song_url = song['url']
+                    lyrics = self.get_lyrics(song_url)
+                   new_song = Song.create(full_title: song['full_title'], artist_id: artist_id, url: song['url'], image: song["song_art_image_url"], title: song['title'])
+                    LyricSnippet.new_song_new_snippets(new_song, lyrics)
+                rescue
+                    puts "rescued!"
+                    next
+                end
             end
         end
     end
