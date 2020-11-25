@@ -3,8 +3,17 @@ class Song < ApplicationRecord
     has_many :lyric_snippets
 
     def self.seed_songs(artist_id)
+
+        current_artist = Artist.find(artist_id)
+
         page_number=1
+
+        if $special_artists.include?(current_artist.name)
+            page_cap = 10
+        else
         page_cap = 5
+        end
+
         while(page_number <= page_cap) do
             response = RestClient.get("https://genius.com/api/artists/#{artist_id}/songs?page=#{page_number}&sort=popularity")
             response = JSON.parse(response)
@@ -18,16 +27,25 @@ class Song < ApplicationRecord
     end
 
     def self.create_songs(songs, artist_id)
+
+        current_artist = Artist.find(artist_id)
         songs.each do |song|
+            if current_artist.songs.length > 75 && !$special_artists.include?(current_artist.name)
+                break
+            end
             # if Artist.songs.all.find(artist_id: artist_id)
             #     next
             # end
             print "song id is #{song["id"]} "
-            if !Song.find_by(full_title: song["full_title"])
+            if !Song.find_by(full_title: song["full_title"]) 
                 begin
                     puts "Seeding #{song['title']}..."
                     song_url = song['url']
                     lyrics = self.get_lyrics(song_url)
+                    if lyrics.length > 11000
+                        print "yooo that's too long"
+                        next
+                    end
                    new_song = Song.create(full_title: song['full_title'], artist_id: artist_id, url: song['url'], image: song["song_art_image_url"], title: song['title'])
                     LyricSnippet.new_song_new_snippets(new_song, lyrics)
                 rescue

@@ -1,10 +1,17 @@
 class Artist < ApplicationRecord
-  has_many :songs
+  has_many :songs, dependent: :delete_all
 
+  $special_artists = ["The Beatles", "Eminem", "Kendrick Lemar", "Drake", "Red Hot Chilli Peppers", ]
+
+  $bogus_artist = ["Music recording sales certification"]
   def self.seed_artist_and_songs(artist_name, genre)
     if Artist.find_by(name: artist_name)
-      print "we already have this artist bro"
-      artist = Artist.find_by(name: artist_name)
+        if (Artist.find_by(name: artist_name).songs.length > 75 &&  !$special_artists.include?(artist_name)) || $bogus_artist.include?(artist_name)
+        print "thats enough for this artist"
+        return true
+        else
+        artist = Artist.find_by(name: artist_name)
+        end
     else
     artist = self.create_artist(artist_name, genre)
       if artist == "artist not available"
@@ -153,4 +160,24 @@ class Artist < ApplicationRecord
       # response = JSON.parse(response)
       end
   end
+
+  def self.seed_top_selling_artists
+    page_url = 'https://en.wikipedia.org/wiki/List_of_best-selling_music_artists'
+      page = Nokogiri::HTML(open(page_url))
+      i = 2
+      while i < 250 do 
+        artist_name = page.css('tr')[i].to_s.split('title')[1].split('">')[0][2..-1]
+        
+        if page.css('tr')[4].to_s.split('/wiki/')[2]
+          genre = page.css('tr')[i].to_s.split('/wiki/')[2].split("title")[1].split('</a>')[0].split('>')[1]
+        else 
+          genre = 'any'
+        end
+        if artist_name.class == String 
+          self.seed_artist_and_songs(artist_name, genre)
+        end
+      i+= 1
+     end
+  end
+
 end

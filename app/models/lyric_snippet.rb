@@ -24,6 +24,7 @@ class LyricSnippet < ApplicationRecord
     return snippet_test_array.length
    end
    def self.new_song_new_snippets(song, lyrics)
+          non_initials = ["(", "'", '"', "[", "/", "`", "+", "*", "&", "^", "%", "$", "#", "@", "-", "="]
     previous_line = ''
       lyrics.each_line do |line|
         print line
@@ -39,18 +40,27 @@ class LyricSnippet < ApplicationRecord
                           end
                           initials = ''
                           line_array.each do |word|
-                            letter_index = 0 
-                            if word[0] == "(" && !!word[1]
-                              if word[1] == "'" && !!word[2]
-                                initials += word[2].downcase
-                              else
-                                initials += word[1].downcase
-                              end
-                            elsif @numHash[word[0]]
+                            letter_index = 0
+                            if @numHash[word[0]]
                               initials += @numHash[word[0]]  
                             else
-                              initials += word[0].downcase
+                              while non_initials.include?(word[letter_index]) do 
+                                letter_index+=1
+                              end
+                              initials += word[letter_index].downcase
                             end
+                            # if word[0] == "(" && !!word[1]
+                            #   if (word[1] == "'"|| word[1] == '"' || word[1] == '/') && !!word[2]
+                            #     initials += word[2].downcase
+                            #   else
+                            #     initials += word[1].downcase
+                            #   end
+                            # elsif word[0] == "‘" || word[0] == '"' || word[0] == '/'
+                            #   if (word[1] == "'" || word[1] == '"' || word[1] == '/') && !!word[2]
+                            #     initials += word[2].downcase
+                            #   else
+                            #     initials += word[1].downcase
+                            #   end
                           end
                           length = line_array.length 
                           sorted_initials = initials.split('').sort().join('')
@@ -65,29 +75,43 @@ class LyricSnippet < ApplicationRecord
                             elsif LyricSnippet.where(initials: initials).length > 100
                                 # print "that's enough snippets with those exact initial(s)"
                                 nil
+                            elsif initials.length > 10
+                                # print "yo this initials is way too long #{initials.length}"
+                                nil
                             else
                                  print "creating new snippet"
                                 new_snippet = LyricSnippet.create(snippet: line, song: song, initials: initials, sorted_initials: sorted_initials)  
                             end   
                   end
                   #now that the regular snippet is created, let's create a new snippet combining this snippet with the previous one
-                  double_line = line.concat(previous_line)
+                  double_line = previous_line + line
+
+                  #caught a MAJOR bug here!
+                  #was adding the lines in the opposite order!
                   double_line_array = double_line.split(' ')
-                  if !LyricSnippet.find_by(snippet: double_line) && double_line_array.length < 10
+                  if !LyricSnippet.find_by(snippet: double_line) && double_line_array.length <= 12
                     double_line_initials = ""
                       double_line_array.each do |word|
                             letter_index = 0 
-                              if word[0] == "(" && !!word[1]
-                                    if word[1] == "'" && !!word[2]
-                                  double_line_initials += word[2].downcase
-                                    else
-                                      double_line_initials += word[1].downcase
-                                    end
-                              elsif @numHash[word[0]]
-                                double_line_initials += @numHash[word[0]]  
-                              else
-                              double_line_initials += word[0].downcase
+                            if @numHash[word[0]]
+                              double_line_initials += @numHash[word[0]]  
+                            else
+                              while non_initials.include?(word[letter_index]) do
+                                letter_index+=1
                               end
+                              double_line_initials += word[letter_index].downcase
+                            end
+                              # if word[0] == "(" && !!word[1]
+                              #       if word[1] == "'" && !!word[2]
+                              #     double_line_initials += word[2].downcase
+                              #       else
+                              #         double_line_initials += word[1].downcase
+                              #       end
+                              # elsif @numHash[word[0]]
+                              #   double_line_initials += @numHash[word[0]]  
+                              # else
+                              # double_line_initials += word[0].downcase
+                              # end
                       end
                     #   if(LyricSnippet.where(initials: initials, song: song)).length > 0
                     #       print "already have an initialism with that song"
@@ -107,6 +131,10 @@ class LyricSnippet < ApplicationRecord
                          elsif LyricSnippet.where(initials: double_line_initials).length > 100
                             # print "that's enough snippets with those exact initial(s)"
                             nil
+                         elsif 
+                          double_line_initials.length > 12
+                          # print "yo this double initials is way too long #{double_line_initials.length}"
+                          nil
                          else
                                     # print "creating new doublesnip"
                             new_double_snippet = LyricSnippet.create(snippet: double_line, song: song, initials: double_line_initials, sorted_initials: sorted_double_line_initials) 
@@ -121,17 +149,25 @@ class LyricSnippet < ApplicationRecord
                       fragment_initials = ''
                       fragment.split(' ').each do |word|
                             letter_index = 0 
-                              if word[0] == "(" && !!word[1]
-                                    if word[1] == "'" && !!word[2]
-                                  fragment_initials += word[2].downcase
-                                    else
-                                      fragment_initials += word[1].downcase
-                                    end
-                              elsif @numHash[word[0]]
-                                fragment_initials += @numHash[word[0]]  
-                              else
-                              fragment_initials += word[0].downcase
+                            if @numHash[word[0]]
+                              fragment_initials += @numHash[word[0]]  
+                            else
+                              while non_initials.include?(word[letter_index]) do
+                                letter_index+=1
                               end
+                              fragment_initials += word[letter_index].downcase
+                            end
+                              # if word[0] == "(" && !!word[1]
+                              #       if word[1] == "'" && !!word[2]
+                              #     fragment_initials += word[2].downcase
+                              #       else
+                              #         fragment_initials += word[1].downcase
+                              #       end
+                              # elsif @numHash[word[0]]
+                              #   fragment_initials += @numHash[word[0]]  
+                              # else
+                              # fragment_initials += word[0].downcase
+                              # end
                           end
                       sorted_fragment_initials = fragment_initials.split('').sort().join('')
                          if(LyricSnippet.where(initials: fragment_initials, song: song)).length > 0
@@ -141,8 +177,11 @@ class LyricSnippet < ApplicationRecord
                          elsif self.check_artist_relationship_to_initials(fragment_initials, song) > 3
                             # print "we're trying to spread the wealth here more and limit the amount of snippets created with the same initials"
                             nil
-                         elsif LyricSnippet.where(initials: double_line_initials).length > 100
+                         elsif LyricSnippet.where(initials: fragment_initials).length > 100
                             # print "that's enough snippets with those exact initial(s)"
+                            nil
+                         elsif fragment_initials.length > 10
+                            # print "yo this is way too long #{fragment_initials.length}"
                             nil
                          else
                             # print "creating new fragment"
