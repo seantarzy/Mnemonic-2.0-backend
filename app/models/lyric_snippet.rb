@@ -14,6 +14,15 @@ class LyricSnippet < ApplicationRecord
      "9"=>"n"
    }
 
+   def self.check_artist_relationship_to_initials(initials, song)
+    songs_belonging_to_artist = Song.where(artist_id: song.artist_id)
+    snippets_with_specific_initials = LyricSnippet.where(initials: initials)
+    snippet_test_array = snippets_with_specific_initials.select do |snippet|
+        songs_belonging_to_artist.include?(snippet.song)
+    end
+    # print "snippet test length: #{ snippet_test_array.length}"
+    return snippet_test_array.length
+   end
    def self.new_song_new_snippets(song, lyrics)
     previous_line = ''
       lyrics.each_line do |line|
@@ -21,7 +30,6 @@ class LyricSnippet < ApplicationRecord
         line_array = line.split(' ')
                 if LyricSnippet.find_by(snippet: line)
                   print "we already have that snippet, homie-------"
-                
                 else
                           if line_array.length < 2
                             next
@@ -46,12 +54,26 @@ class LyricSnippet < ApplicationRecord
                           end
                           length = line_array.length 
                           sorted_initials = initials.split('').sort().join('')
-                          new_snippet = LyricSnippet.create(snippet: line, song: song, initials: initials, sorted_initials: sorted_initials)     
+                          #check if a Song already has those initials
+                            if(LyricSnippet.where(initials: initials, song: song)).length > 0
+                                # print "already have an initialism with that song"
+                                nil
+                            #write a function to check if an artist already has those initials in a song more than a few time 
+                            elsif self.check_artist_relationship_to_initials(initials, song) > 3
+                                # print "we're trying to spread the wealth here more and limit the amount of snippets created with the same initials"
+                                nil
+                            elsif LyricSnippet.where(initials: initials).length > 100
+                                # print "that's enough snippets with those exact initial(s)"
+                                nil
+                            else
+                                 print "creating new snippet"
+                                new_snippet = LyricSnippet.create(snippet: line, song: song, initials: initials, sorted_initials: sorted_initials)  
+                            end   
                   end
                   #now that the regular snippet is created, let's create a new snippet combining this snippet with the previous one
                   double_line = line.concat(previous_line)
                   double_line_array = double_line.split(' ')
-                  if !LyricSnippet.find_by(snippet: double_line) && double_line_array.length < 15
+                  if !LyricSnippet.find_by(snippet: double_line) && double_line_array.length < 10
                     double_line_initials = ""
                       double_line_array.each do |word|
                             letter_index = 0 
@@ -67,9 +89,28 @@ class LyricSnippet < ApplicationRecord
                               double_line_initials += word[0].downcase
                               end
                       end
-                      print "double line! " + double_line
+                    #   if(LyricSnippet.where(initials: initials, song: song)).length > 0
+                    #       print "already have an initialism with that song"
+                          
+                    #       #write a function to check if an artist already has those initials in a song more than a few time 
+                    #       elsif self.check_artist_relationship_to_initials(initials, song) > 5
+                    #         print "we're trying to spread the wealth here more"
+                    #       else
                         sorted_double_line_initials = double_line_initials.split('').sort().join('')
-                      new_double_snippet = LyricSnippet.create(snippet: double_line, song: song, initials: double_line_initials, sorted_initials: sorted_double_line_initials) 
+                         if(LyricSnippet.where(initials: double_line_initials, song: song)).length > 0
+                            # print "already have an initialism with that song"
+                            nil
+                            #write a function to check if an artist already has those initials in a song more than a few time 
+                         elsif self.check_artist_relationship_to_initials(double_line_initials, song) > 3
+                            # print "we're trying to spread the wealth here more and limit the amount of snippets created with the same initials"
+                            nil
+                         elsif LyricSnippet.where(initials: double_line_initials).length > 100
+                            # print "that's enough snippets with those exact initial(s)"
+                            nil
+                         else
+                                    # print "creating new doublesnip"
+                            new_double_snippet = LyricSnippet.create(snippet: double_line, song: song, initials: double_line_initials, sorted_initials: sorted_double_line_initials) 
+                         end
                   end
                   previous_line = line
                   #set the previous line for the next double_line_snippet
@@ -92,9 +133,21 @@ class LyricSnippet < ApplicationRecord
                               fragment_initials += word[0].downcase
                               end
                           end
-                          print "Fragment " + fragment
                       sorted_fragment_initials = fragment_initials.split('').sort().join('')
-                      new_fragment = LyricSnippet.create(snippet: fragment, song: song, initials: fragment_initials, sorted_initials: sorted_fragment_initials) 
+                         if(LyricSnippet.where(initials: fragment_initials, song: song)).length > 0
+                            # print "already have an initialism with that song"
+                            nil
+                            #write a function to check if an artist already has those initials in a song more than a few time 
+                         elsif self.check_artist_relationship_to_initials(fragment_initials, song) > 3
+                            # print "we're trying to spread the wealth here more and limit the amount of snippets created with the same initials"
+                            nil
+                         elsif LyricSnippet.where(initials: double_line_initials).length > 100
+                            # print "that's enough snippets with those exact initial(s)"
+                            nil
+                         else
+                            # print "creating new fragment"
+                            new_fragment = LyricSnippet.create(snippet: fragment, song: song, initials: fragment_initials, sorted_initials: sorted_fragment_initials) 
+                         end
                     end
                   end
                   print "created new lyric snippets!"
@@ -129,14 +182,11 @@ class LyricSnippet < ApplicationRecord
                               initials += word[0].downcase
                             end
                           end
-                if(!SnippetTank.find_by(id: length))
-                  SnippetTank.create(id: length)
-                end
                 #might not have to seed songs totally
                 #maybe include 
                 sorted_initials = initials.split('').sort().join('')
                 new_lyric = LyricSnippet.create(snippet: line, song: song, initials: initials, sorted_initials: sorted_initials) 
-                print "creating new lyric snippet! #{new_lyric.snippet} with length: #{length} and a tank id of #{new_lyric.snippet_tank_id}"
+                print "creating new lyric snippet! #{new_lyric.snippet} with length: #{length}"
               end
             end
           end
