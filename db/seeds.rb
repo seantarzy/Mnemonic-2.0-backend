@@ -14,11 +14,11 @@
 #     # Populate playlists with bookmarks here
 # end
 
-# Artist.seed_billboard
+Artist.seed_top_selling_artists
+Artist.seed_billboard
 
 # Artist.seed_artist_and_songs("The Beatles", "Rock")
-Artist.seed_artist_and_songs("Eminem", "Hip-hop")
+# Artist.seed_artist_and_songs("Eminem", "Hip-hop")
 
-# Artist.seed_top_selling_artists
 
 puts "--- SEEDING COMPLETE ---"

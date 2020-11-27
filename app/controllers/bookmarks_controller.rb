@@ -1,5 +1,5 @@
 class BookmarksController < ApplicationController
-    before_action :authorized, only: [:create, :index, :destroy]
+    before_action :authorized, only: [:create, :index, :destroy, :update]
 
     def create
         
@@ -19,6 +19,17 @@ class BookmarksController < ApplicationController
     def destroy
         Bookmark.find(params[:id]).destroy()
     end
+
+    def show
+       bookmark = Bookmark.find(params[:id])
+       render json: bookmark
+    end
+    def update
+       bookmark = Bookmark.find(params[:bookmark_id])
+       bookmark.update_attribute(:note, params[:note])
+    end
+
+
     
     private
   

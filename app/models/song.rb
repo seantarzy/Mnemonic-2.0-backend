@@ -1,11 +1,9 @@
 class Song < ApplicationRecord
     belongs_to :artist
-    has_many :lyric_snippets
+    has_many :lyric_snippets, dependent: :delete_all
 
     def self.seed_songs(artist_id)
-
         current_artist = Artist.find(artist_id)
-
         page_number=1
 
         if $special_artists.include?(current_artist.name)
@@ -33,10 +31,6 @@ class Song < ApplicationRecord
             if current_artist.songs.length > 75 && !$special_artists.include?(current_artist.name)
                 break
             end
-            # if Artist.songs.all.find(artist_id: artist_id)
-            #     next
-            # end
-            print "song id is #{song["id"]} "
             if !Song.find_by(full_title: song["full_title"]) 
                 begin
                     puts "Seeding #{song['title']}..."

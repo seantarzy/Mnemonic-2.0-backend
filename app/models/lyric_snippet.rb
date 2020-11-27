@@ -23,6 +23,7 @@ class LyricSnippet < ApplicationRecord
     # print "snippet test length: #{ snippet_test_array.length}"
     return snippet_test_array.length
    end
+
    def self.new_song_new_snippets(song, lyrics)
           non_initials = ["(", "'", '"', "[", "/", "`", "+", "*", "&", "^", "%", "$", "#", "@", "-", "="]
     previous_line = ''
@@ -232,27 +233,92 @@ class LyricSnippet < ApplicationRecord
       end
 
 
+  def self.line_up_matching_initials(input_phrase, output_snippet)
+  correct_initials_order = output_snippet[:initials].split('') 
+
+    corrected_word_order = []
+
+  input_phrase.split(" ").each do |word|
+    new_index = correct_initials_order.index(word[0])
+
+    correct_initials_order[new_index] = nil
+
+    corrected_word_order[new_index] = word
+  end
+
+  return corrected_word_order.join(', ')
+
+  end
     
 
-  def self.match_initials_to_lyrics(query, current_snippet_index=0, order)
-    initials = Artist.get_initials(query)
-   downcased_initials = initials.downcase
-   if order
-    money_lyric_snippets = LyricSnippet.where(initials: downcased_initials)
-   else
-    sorted_downcased_initials = downcased_initials.sort()
-    money_lyric_snippets = LyricSnippet.where(sorted_initials: sorted_downcased_initials)
-  end 
-  current_snippet = money_lyric_snippets[current_snippet_index]
-  song = Song.find(current_snippet.song_id)
-  youtube_id = Song.get_youtube_id(song['full_title'])
-  song_url = song['url']
-  lyrics = Song.get_lyrics(song_url)
-  song = song.attributes
-  song['youtube_id'] = youtube_id 
-  song["lyrics"] = lyrics
-    return {input_phrase: query, matching_phrase: current_snippet, song: song} 
-  
+  def self.match_initials_to_lyrics(query, current_snippet_index=0, order, artist_id)
+    downcased_query = query.downcase
+    initials = Artist.get_initials(downcased_query)
+    downcased_initials = initials.downcase
+
+    if order 
+          if artist_id > 0
+               #first check if the snippet is by the chosen artist
+            snippets_by_artist = Artist.find(artist_id).lyric_snippets
+            money_lyric_snippets_by_artist = snippets_by_artist.where(initials: downcased_initials)
+          else
+            satisfied_artist_request = true
+          end
+
+          if money_lyric_snippets_by_artist && money_lyric_snippets_by_artist.length > current_snippet_index
+            money_lyric_snippets = money_lyric_snippets_by_artist
+            satisfied_artist_request = true
+          else
+              satisfied_artist_request = false
+              money_lyric_snippets = LyricSnippet.where(initials: downcased_initials)
+          end
+
+    else
+        sorted_downcased_initials = downcased_initials.split('').sort().join('')
+          if artist_id > 0
+            snippets_by_artist = Artist.find(artist_id).lyric_snippets
+            money_lyric_snippets_by_artist = snippets_by_artist.where(sorted_initials: sorted_downcased_initials)
+          else
+            satisfied_artist_request = true
+          end
+          # songs_by_chosen_artist = Artist.find(artist_id).songs    
+          if money_lyric_snippets_by_artist && money_lyric_snippets_by_artist.length > current_snippet_index
+            money_lyric_snippets = money_lyric_snippets_by_artist
+            satisfied_artist_request = true
+          else
+            satisfied_artist_request = false
+            #first check if the snippet is by the chosen artist
+            # if money_lyric_snippets.length <= current_snippet_index
+            money_lyric_snippets = LyricSnippet.where(sorted_initials: sorted_downcased_initials)
+            #since the order didn't matter, we have to rearrange the user's input to match those of the snippets
+            # end
+          end
+      end
+
+    original_query = query
+
+    if current_snippet_index > 0
+        satisfied_artist_request = true
+    end
+
+
+    if money_lyric_snippets.length > 0
+        current_snippet = money_lyric_snippets[current_snippet_index]
+        if !order
+        query = self.line_up_matching_initials(downcased_query, current_snippet)
+        end
+        song = Song.find(current_snippet.song_id)
+        youtube_id = Song.get_youtube_id(song['full_title'])
+        song_url = song['url']
+        lyrics = Song.get_lyrics(song_url)
+        song = song.attributes
+        song['youtube_id'] = youtube_id 
+        song["lyrics"] = lyrics
+        current_snippet_index += 1
+        return {input_phrase: query, current_snippet_index: current_snippet_index, matching_phrase: current_snippet.snippet, song: song, original_query: original_query, order_matters: order, satisfied_artist_request: satisfied_artist_request} 
+    else
+        return {error: "no matching text"}
+    end
   end
 
   def self.seed_sorted_initials

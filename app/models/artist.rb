@@ -1,19 +1,20 @@
 class Artist < ApplicationRecord
   has_many :songs, dependent: :delete_all
+  has_many :lyric_snippets, through: :songs
 
   $special_artists = ["The Beatles", "Eminem", "Kendrick Lemar", "Drake", "Red Hot Chilli Peppers", ]
 
-  $bogus_artist = ["Music recording sales certification"]
+  $bogus_artists = ["Music recording sales certification", "Jars of Clay"]
   def self.seed_artist_and_songs(artist_name, genre)
     if Artist.find_by(name: artist_name)
-        if (Artist.find_by(name: artist_name).songs.length > 75 &&  !$special_artists.include?(artist_name)) || $bogus_artist.include?(artist_name)
+        if (Artist.find_by(name: artist_name).songs.length > 75 &&  !$special_artists.include?(artist_name)) || $bogus_artists.include?(artist_name)
         print "thats enough for this artist"
         return true
         else
         artist = Artist.find_by(name: artist_name)
         end
     else
-    artist = self.create_artist(artist_name, genre)
+      artist = self.create_artist(artist_name, genre)
       if artist == "artist not available"
       return true
       end
@@ -106,26 +107,26 @@ class Artist < ApplicationRecord
   end
 
   def self.match_to_lyrics(query, current_song_index, artist_filter = 'any', order)
-    initials = self.get_initials(query)
+      initials = self.get_initials(query)
 
-    # Set songs to array of queryable songs based on artist filter
-    songs = self.get_songs_by_artist_id(artist_filter)
+      # Set songs to array of queryable songs based on artist filter
+      songs = self.get_songs_by_artist_id(artist_filter)
     
-    matching_info = false
+      matching_info = false
     
-    songs[current_song_index..-1].each_with_index do |song, song_index|
-      lyrics = song['lyrics'].split(' ' || '\n')
-      if order
-        matching_info = self.query_with_order(initials, current_song_index, lyrics, song, song_index)
-      else
-        matching_info = self.query_without_order(initials, current_song_index, lyrics, song, song_index)
-      end
+      songs[current_song_index..-1].each_with_index do |song, song_index|
+        lyrics = song['lyrics'].split(' ' || '\n')
+        if order
+          matching_info = self.query_with_order(initials, current_song_index, lyrics, song, song_index)
+        else
+          matching_info = self.query_without_order(initials, current_song_index, lyrics, song, song_index)
+        end
 
-      if matching_info
-          matching_info["input_phrase"] = query
-          return matching_info
+        if matching_info
+            matching_info["input_phrase"] = query
+            return matching_info
+        end
       end
-    end
 
     return {error: "No matching text"} 
   end
@@ -136,9 +137,9 @@ class Artist < ApplicationRecord
 
 
   def self.get_response_status(artist_name)
-  response = RestClient.get("#{@@base_genius_uri}/search?q=#{artist_name}&access_token=#{ENV['GENIUS_API_KEY']}")
-  response = JSON.parse(response)
-  status = response["meta"]["status"]
+    response = RestClient.get("#{@@base_genius_uri}/search?q=#{artist_name}&access_token=#{ENV['GENIUS_API_KEY']}")
+    response = JSON.parse(response)
+    status = response["meta"]["status"]
   end
 
   def self.seed_billboard
@@ -162,7 +163,7 @@ class Artist < ApplicationRecord
   end
 
   def self.seed_top_selling_artists
-    page_url = 'https://en.wikipedia.org/wiki/List_of_best-selling_music_artists'
+      page_url = 'https://en.wikipedia.org/wiki/List_of_best-selling_music_artists'
       page = Nokogiri::HTML(open(page_url))
       i = 2
       while i < 250 do 
@@ -173,9 +174,11 @@ class Artist < ApplicationRecord
         else 
           genre = 'any'
         end
+
         if artist_name.class == String 
           self.seed_artist_and_songs(artist_name, genre)
         end
+
       i+= 1
      end
   end
