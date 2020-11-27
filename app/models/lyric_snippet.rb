@@ -26,12 +26,13 @@ class LyricSnippet < ApplicationRecord
 
    def self.new_song_new_snippets(song, lyrics)
           non_initials = ["(", "'", '"', "[", "/", "`", "+", "*", "&", "^", "%", "$", "#", "@", "-", "="]
-    previous_line = ''
-      lyrics.each_line do |line|
-        print line
-        line_array = line.split(' ')
+          previous_line = ''
+          lyrics.each_line do |line|
+        
+            line_array = line.split(' ')
                 if LyricSnippet.find_by(snippet: line)
-                  print "we already have that snippet, homie-------"
+                  #no use in recreating snippets
+                  nil
                 else
                           if line_array.length < 2
                             next
@@ -80,7 +81,6 @@ class LyricSnippet < ApplicationRecord
                                 # print "yo this initials is way too long #{initials.length}"
                                 nil
                             else
-                                 print "creating new snippet"
                                 new_snippet = LyricSnippet.create(snippet: line, song: song, initials: initials, sorted_initials: sorted_initials)  
                             end   
                   end
@@ -190,47 +190,46 @@ class LyricSnippet < ApplicationRecord
                          end
                     end
                   end
-                  print "created new lyric snippets!"
         end
     end
       
-    def self.seed_lyric_snippets
-        Song.all[15000..Song.all.length].each do |song|
-            song["lyrics"].each_line do |line|
-                print "this line" + line
-                line_array = line.split(' ')
-                # print "this line array #{line_array}"
-                print line[0]
-                length = line_array.length
+    # def self.seed_lyric_snippets_through_existing_songs
+    #     Song.all[15000..Song.all.length].each do |song|
+    #         song["lyrics"].each_line do |line|
+    #             print "this line" + line
+    #             line_array = line.split(' ')
+    #             # print "this line array #{line_array}"
+    #             print line[0]
+    #             length = line_array.length
                 
-              if length > 0 
-                        if line_array[0][0] == '['
-                          next
-                        end
-                        initials = ''
-                          line_array.each do |word|
-                            letter_index = 0 
-                              if word[0] == "(" && !!word[1]
-                                if word[1] == "'" && !!word[2]
-                              initials += word[2].downcase
-                                else
-                                  initials += word[1].downcase
-                                end
-                              elsif @numHash[word[0]]
-                                initials += @numHash[word[0]]  
-                              else
-                              initials += word[0].downcase
-                            end
-                          end
-                #might not have to seed songs totally
-                #maybe include 
-                sorted_initials = initials.split('').sort().join('')
-                new_lyric = LyricSnippet.create(snippet: line, song: song, initials: initials, sorted_initials: sorted_initials) 
-                print "creating new lyric snippet! #{new_lyric.snippet} with length: #{length}"
-              end
-            end
-          end
-      end
+    #           if length > 0 
+    #                     if line_array[0][0] == '['
+    #                       next
+    #                     end
+    #                     initials = ''
+    #                       line_array.each do |word|
+    #                         letter_index = 0 
+    #                           if word[0] == "(" && !!word[1]
+    #                             if word[1] == "'" && !!word[2]
+    #                           initials += word[2].downcase
+    #                             else
+    #                               initials += word[1].downcase
+    #                             end
+    #                           elsif @numHash[word[0]]
+    #                             initials += @numHash[word[0]]  
+    #                           else
+    #                           initials += word[0].downcase
+    #                         end
+    #                       end
+    #             #might not have to seed songs totally
+    #             #maybe include 
+    #             sorted_initials = initials.split('').sort().join('')
+    #             new_lyric = LyricSnippet.create(snippet: line, song: song, initials: initials, sorted_initials: sorted_initials) 
+    #             print "creating new lyric snippet! #{new_lyric.snippet} with length: #{length}"
+    #           end
+    #         end
+    #       end
+    #   end
 
 
   def self.line_up_matching_initials(input_phrase, output_snippet)
@@ -294,9 +293,7 @@ class LyricSnippet < ApplicationRecord
             # end
           end
       end
-
     original_query = query
-
     if current_snippet_index > 0
         satisfied_artist_request = true
     end
