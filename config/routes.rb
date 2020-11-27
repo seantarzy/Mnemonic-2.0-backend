@@ -11,6 +11,8 @@ Rails.application.routes.draw do
   get '/stay_logged_in', to: 'users#stay_logged_in'
   # post '/stay_logged_in', to: 'users#stay_logged_in'
   post '/login', to: 'users#login'
+
+  root "application#index"
     #retrieves youtube url based on song id
   # For details on the DSL available within this file, see https://guides.rubyonrails.org/routing.html
 end
