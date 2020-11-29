@@ -1,7 +1,8 @@
 class ArtistsController < ApplicationController
     def index
         artists = Artist.all
-        render json: artists
+        sorted_artists =  artists.sort_by {|artist| artist.name} 
+        render json: sorted_artists
     end
 
     def query
