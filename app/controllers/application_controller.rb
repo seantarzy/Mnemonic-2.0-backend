@@ -5,6 +5,9 @@ class ApplicationController < ActionController::API
         JWT.encode(payload, 'def123')
     end
 
+    def index
+        render json: "Hello World"
+    end
 
     def auth_header
     # { Authorization: '<token>' }
