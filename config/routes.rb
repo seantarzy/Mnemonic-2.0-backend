@@ -12,9 +12,9 @@ Rails.application.routes.draw do
   # post '/stay_logged_in', to: 'users#stay_logged_in'
   post '/login', to: 'users#login'
 
-  root 'welcome#index'
+  # root 'welcome#index'
 
-  # root '/'
+  root 'application#index'
 
     #retrieves youtube url based on song id
   # For details on the DSL available within this file, see https://guides.rubyonrails.org/routing.html
