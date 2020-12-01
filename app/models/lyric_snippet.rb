@@ -128,7 +128,7 @@ class LyricSnippet < ApplicationRecord
         satisfied_artist_request = true
       end
     end
-    
+
     original_query = query
     if current_snippet_index > 0
       satisfied_artist_request = true
@@ -157,7 +157,12 @@ class LyricSnippet < ApplicationRecord
 #----------------------------------------------
 #SEEDING METHODS: 
 #----------------------------------------------
+#ideas for next round of seeding: 
+#split sentences about the word, "and"
 
+# in the query method: 
+# use this: LyricSnippet.where("sorted_initials LIKE ?", "%"+ "gjpr"+ "%")
+# convert the user's number input into a word
 
   def self.check_artist_relationship_to_initials(initials, song)
    songs_belonging_to_artist = Song.where(artist_id: song.artist_id)
