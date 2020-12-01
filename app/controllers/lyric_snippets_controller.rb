@@ -1,7 +1,5 @@
 class LyricSnippetsController < ApplicationController
     def query
-        initials = Artist.get_initials(params[:query])
-
         if params[:order] == "true"
             order = true
         else
