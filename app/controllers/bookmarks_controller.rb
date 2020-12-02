@@ -2,7 +2,6 @@ class BookmarksController < ApplicationController
     before_action :authorized, only: [:create, :index, :destroy, :update]
 
     def create
-        
         @bookmark = Bookmark.create(bookmark_params)
 
         if @bookmark.valid?
@@ -28,8 +27,6 @@ class BookmarksController < ApplicationController
        bookmark = Bookmark.find(params[:bookmark_id])
        bookmark.update_attribute(:note, params[:note])
     end
-
-
     
     private
   
