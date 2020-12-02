@@ -58,12 +58,17 @@ class LyricSnippet < ApplicationRecord
 #----------------------------------------------
    
    def self.line_up_matching_initials(input_phrase, output_snippet)
-    correct_initials_order = output_snippet[:initials].split('') 
+    correct_initials_order = output_snippet.split('') 
     
     corrected_word_order = []
     
     input_phrase.split(" ").each do |word|
-      new_index = correct_initials_order.index(word[0])
+      if @numHash[word[0]]
+        initial = @numHash[word[0]]
+      else
+        initial = word[0]
+      end
+      new_index = correct_initials_order.index(initial)
       
       correct_initials_order[new_index] = nil
       
@@ -75,16 +80,32 @@ class LyricSnippet < ApplicationRecord
   end
   
   def self.get_initials(query)
-    return query.split(' ').map(&:first).join.upcase
+
+    initials = []
+     query.split(' ').each do |word|
+      if @numHash[word[0]]
+        initial = @numHash[word[0]]
+      else
+        initial = word[0]
+      end
+      initials.push(initial)
+     end
+     return initials.join('')
   end
   
   
+  # def self.bold_the_matching_initials(snippet, downcased_initials, exact_match)
+  #   if exact_match
+  #     bolded_snippet = snippet.split(' ').map
+  #   end
+  #   #go through the snippet
+
+  # end
   
   
   def self.match_initials_to_lyrics(query, current_snippet_index=0, order, artist_id)
     downcased_query = query.downcase
-    initials = self.get_initials(downcased_query)
-    downcased_initials = initials.downcase
+    downcased_initials = self.get_initials(downcased_query)
     
     if order 
       if artist_id > 0
@@ -134,12 +155,26 @@ class LyricSnippet < ApplicationRecord
       satisfied_artist_request = true
     end
     
+
+    if money_lyric_snippets.length == 0 
+      #if we don't get any results, we might as well try to get them this way, where the inputted initials just have to be contiguous in the snippet
+      if order
+        money_lyric_snippets = LyricSnippet.where("initials LIKE ?", "%" + "#{downcased_initials}" + "%")
+      else
+        money_lyric_snippets = LyricSnippet.where("sorted_initials LIKE ?", "%"+ "#{sorted_downcased_initials}" + "%")
+      end
+    end
+
+
     if money_lyric_snippets.length > 0
       #if we have at least one matching snippet with the appropriate initials 
       current_snippet = money_lyric_snippets[current_snippet_index]
       if !order
-        query = self.line_up_matching_initials(downcased_query, current_snippet)
+        query = self.line_up_matching_initials(downcased_query, current_snippet.initials)
+        # bolded_matching_phrase = self.bold_the_matching_initials(current_snippet.snippet, sorted_downcased_initials, exact_match)
+        # bolded_matching_phrase = self.bold_the_matching_initials(current_snippet.snippet, downcased_initials, exact_match)
       end
+
       song = Song.find(current_snippet.song_id)
       youtube_id = Song.get_youtube_id(song['full_title'])
       song_url = song['url']
@@ -221,7 +256,7 @@ class LyricSnippet < ApplicationRecord
                                # print "already have an initialism with that song"
                                nil
                            #write a function to check if an artist already has those initials in a song more than a few time 
-                           elsif self.check_artist_relationship_to_initials(initials, song) > 3
+                           elsif self.check_artist_relationship_to_initials(initials, song) > 2
                                # print "we're trying to spread the wealth here more and limit the amount of snippets created with the same initials"
                                nil
                            elsif LyricSnippet.where(initials: initials).length > 100
@@ -240,7 +275,7 @@ class LyricSnippet < ApplicationRecord
                  #caught a MAJOR bug here!
                  #was adding the lines in the opposite order!
                  double_line_array = double_line.split(' ')
-                 if !LyricSnippet.find_by(snippet: double_line) && double_line_array.length <= 12
+                 if !LyricSnippet.find_by(snippet: double_line) && double_line_array.length <= 15
                    double_line_initials = ""
                      double_line_array.each do |word|
                            letter_index = 0 
@@ -325,7 +360,7 @@ class LyricSnippet < ApplicationRecord
                            # print "already have an initialism with that song"
                            nil
                            #write a function to check if an artist already has those initials in a song more than a few time 
-                        elsif self.check_artist_relationship_to_initials(fragment_initials, song) > 3
+                        elsif self.check_artist_relationship_to_initials(fragment_initials, song) > 2
                            # print "we're trying to spread the wealth here more and limit the amount of snippets created with the same initials"
                            nil
                         elsif LyricSnippet.where(initials: fragment_initials).length > 100

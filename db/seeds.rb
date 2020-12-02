@@ -19,7 +19,11 @@
 
 Artist.seed_artist_and_songs("The Beatles", "Rock")
 Artist.seed_artist_and_songs("Eminem", "Hip-hop")
-Artist.seed_artist_and_songs("Jay-z", "Hip-hop")
+Artist.seed_artist_and_songs("J-Cole", "Hip-hop")
+Artist.seed_artist_and_songs("Biggie Smalls", "Hip-hop")
+Artist.seed_artist_and_songs("Paul McCartney", "Rock")
+Artist.seed_artist_and_songs("John Lennon", "Hip-hop")
+Artist.seed_artist_and_songs("Kendrick Lamar", "Hip-hop")
 Artist.seed_artist_and_songs("Red Hot Chilli Peppers", "Rock")
 
 

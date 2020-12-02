@@ -165,18 +165,20 @@ class Artist < ApplicationRecord
       page = Nokogiri::HTML(open(page_url))
       i = 2
       while i < 250 do 
-        artist_name = page.css('tr')[i].to_s.split('title')[1].split('">')[0][2..-1]
-        
-        if page.css('tr')[4].to_s.split('/wiki/')[2]
-          genre = page.css('tr')[i].to_s.split('/wiki/')[2].split("title")[1].split('</a>')[0].split('>')[1]
-        else 
-          genre = 'any'
+        begin
+          artist_name = page.css('tr')[i].to_s.split('title')[1].split('">')[0][2..-1]
+          
+          if page.css('tr')[4].to_s.split('/wiki/')[2]
+            genre = page.css('tr')[i].to_s.split('/wiki/')[2].split("title")[1].split('</a>')[0].split('>')[1]
+          else 
+            genre = 'any'
+          end
+          if artist_name.class == String 
+            self.seed_artist_and_songs(artist_name, genre)
+          end
+        rescue => exception
+          print "rescued"
         end
-
-        if artist_name.class == String 
-          self.seed_artist_and_songs(artist_name, genre)
-        end
-
       i+= 1
      end
   end
