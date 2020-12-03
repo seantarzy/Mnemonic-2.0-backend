@@ -156,13 +156,15 @@ class LyricSnippet < ApplicationRecord
     end
     
 
-    if money_lyric_snippets.length == 0 
+    if current_snippet_index >= money_lyric_snippets.length
       #if we don't get any results, we might as well try to get them this way, where the inputted initials just have to be contiguous in the snippet
       if order
-        money_lyric_snippets = LyricSnippet.where("initials LIKE ?", "%" + "#{downcased_initials}" + "%")
+        money_lyric_snippets.concat(LyricSnippet.where("initials LIKE ?", "%" + "#{downcased_initials}" + "%"))
       else
-        money_lyric_snippets = LyricSnippet.where("sorted_initials LIKE ?", "%"+ "#{sorted_downcased_initials}" + "%")
+        money_lyric_snippets.concat(LyricSnippet.where("sorted_initials LIKE ?", "%"+ "#{sorted_downcased_initials}" + "%"))
       end
+
+
     end
 
 
