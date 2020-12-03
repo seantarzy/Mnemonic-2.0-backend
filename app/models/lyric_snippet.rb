@@ -14,6 +14,17 @@ class LyricSnippet < ApplicationRecord
      "9"=>"n"
    }
 
+  #  @full_num_hash = {numHash = {
+  #    "1": "one",
+  #    "2": "two",
+  #    "3": "three",
+  #    "4": "four",
+  #    "5":"five",
+  #    "6":"six",
+  #    "7":"seven",
+  #    "8":"eight",
+  #    "9":"nine"
+  #  }}
    
    # def self.seed_lyric_snippets_through_existing_songs
    #     Song.all[15000..Song.all.length].each do |song|
@@ -164,11 +175,11 @@ class LyricSnippet < ApplicationRecord
         money_lyric_snippets = LyricSnippet.where("sorted_initials LIKE ?", "%"+ "#{sorted_downcased_initials}" + "%") 
       end
 
-
+      
     end
 
 
-    if money_lyric_snippets.length > 0
+    if money_lyric_snippets.length > 0 && current_snippet_index < money_lyric_snippets.length
       #if we have at least one matching snippet with the appropriate initials 
       current_snippet = money_lyric_snippets[current_snippet_index]
       if !order
