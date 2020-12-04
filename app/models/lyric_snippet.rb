@@ -14,6 +14,8 @@ class LyricSnippet < ApplicationRecord
      "9"=>"n"
    }
 
+   @current_snippets_array = nil
+
   #  @full_num_hash = {numHash = {
   #    "1": "one",
   #    "2": "two",
@@ -114,57 +116,75 @@ class LyricSnippet < ApplicationRecord
   # end
   
   
-  def self.match_initials_to_lyrics(query, current_snippet_index=0, order, artist_id)
+  def self.match_initials_to_lyrics(query, current_snippet_index=0, order, artist_id, fresh_search)
+
     downcased_query = query.downcase
+
     downcased_initials = self.get_initials(downcased_query)
-    
-    if order 
-      if artist_id > 0
-        #first check if the snippet is by the chosen artist
-            snippets_by_artist = Artist.find(artist_id).lyric_snippets
-            money_lyric_snippets_by_artist = snippets_by_artist.where(initials: downcased_initials)  
-          if money_lyric_snippets_by_artist && money_lyric_snippets_by_artist.length > current_snippet_index
-            money_lyric_snippets = money_lyric_snippets_by_artist
-            satisfied_artist_request = true
-          else
-            satisfied_artist_request = false
-            money_lyric_snippets = LyricSnippet.where(initials: downcased_initials)
-          end
+    if fresh_search
+      if order 
+              if artist_id > 0
+                  snippets_by_artist = Artist.find(artist_id).lyric_snippets
+                  money_lyric_snippets_by_artist = snippets_by_artist.where(initials: downcased_initials)
+                  #first check if the snippet is by the chosen artist      
+                  if !(money_lyric_snippets_by_artist.length >0)
+                  satisfied_artist_request = false
+                  #if they entered an artist, and we couldn't hack it, we let them down.
+                  end 
+              else
+                satisfied_artist_request = true
+                  #if they never chose an artist, we're not dissappointing them
+              end
+
+              all_money_lyric_snippets = LyricSnippet.where(initials: downcased_initials)
+
+              if artist_id > 0 && money_lyric_snippets_by_artist.length > 0
+                satisfied_artist_request = true
+                #got artist results with those initials
+              all_snippets_without_specified_artist = all_money_lyric_snippets.select {|snippet| snippet.song.artist.id != artist_id}
+              #filter out the artists from the total snippets array so we can combine the two snippet arrays/ this way the artist specified ones are rendered at the top of the list
+              final_snippets_array = money_lyric_snippets_by_artist + all_snippets_without_specified_artist
+              else
+                final_snippets_array = all_money_lyric_snippets
+              end
       else
-        #if the user never specified an artist
-         money_lyric_snippets = LyricSnippet.where(initials: downcased_initials)
-        satisfied_artist_request = true
+        #if order doesn't matter
+        sorted_downcased_initials = downcased_initials.split('').sort().join('')
+          if artist_id > 0
+              snippets_by_artist = Artist.find(artist_id).lyric_snippets
+              money_lyric_snippets_by_artist = snippets_by_artist.where(sorted_initials: sorted_downcased_initials)
+              if !(money_lyric_snippets_by_artist.length > 0)
+                  satisfied_artist_request = false
+                  #if they entered an artist, and we couldn't hack it, we let them down.
+              end 
+          else
+            satisfied_artist_request = true 
+          #if they never chose an artist, we're not dissappointing them
+          end
+          # songs_by_chosen_artist = Artist.find(artist_id).songs   
+              all_money_lyric_snippets = LyricSnippet.where(sorted_initials: sorted_downcased_initials)
+              if artist_id > 0 && money_lyric_snippets_by_artist.length > 0
+              satisfied_artist_request = true
+                #got artist results with those initials
+              all_snippets_without_specified_artist = all_money_lyric_snippets.select {|snippet| snippet.song.artist.id != artist_id}
+              #filter out the artists from the total snippets array so we can combine the two snippet arrays/ this way the artist specified ones are rendered at the top of the list
+            final_snippets_array = money_lyric_snippets_by_artist + all_snippets_without_specified_artist
+              satisfied_artist_request = true
+            else
+              #first check if the snippet is by the chosen artist
+              final_snippets_array = all_money_lyric_snippets
+              #since the order didn't matter, we have to rearrange the user's input to match those of the snippets
+              # end
+            end
       end
-      
+
+      @current_snippets_array = final_snippets_array
     else
-      #if order doesn't matter
-      sorted_downcased_initials = downcased_initials.split('').sort().join('')
-      if artist_id > 0
-          snippets_by_artist = Artist.find(artist_id).lyric_snippets
-          money_lyric_snippets_by_artist = snippets_by_artist.where(sorted_initials: sorted_downcased_initials)
-        # songs_by_chosen_artist = Artist.find(artist_id).songs    
-          if money_lyric_snippets_by_artist && money_lyric_snippets_by_artist.length > current_snippet_index
-            money_lyric_snippets = money_lyric_snippets_by_artist
-            satisfied_artist_request = true
-          else
-            satisfied_artist_request = false
-            #first check if the snippet is by the chosen artist
-            # if money_lyric_snippets.length <= current_snippet_index
-            money_lyric_snippets = LyricSnippet.where(sorted_initials: sorted_downcased_initials)
-            #since the order didn't matter, we have to rearrange the user's input to match those of the snippets
-            # end
-          end
-      else
-        #no artist was ever chosen
-        money_lyric_snippets = LyricSnippet.where(sorted_initials: sorted_downcased_initials)
-        satisfied_artist_request = true
-      end
+      final_snippets_array = @current_snippets_array
     end
 
-    original_query = query
-    if current_snippet_index > 0
-      satisfied_artist_request = true
-    end
+            #save this array here, for we will come back to it if they decide to go to next result or previous result
+      original_query = query
     
 
     # if current_snippet_index >= money_lyric_snippets.length
@@ -179,15 +199,15 @@ class LyricSnippet < ApplicationRecord
     # end
 
 
-    if money_lyric_snippets.length > 0 && current_snippet_index < money_lyric_snippets.length
+    if final_snippets_array.length > 0 && current_snippet_index < final_snippets_array.length
       #if we have at least one matching snippet with the appropriate initials 
-      current_snippet = money_lyric_snippets[current_snippet_index]
+      current_snippet = final_snippets_array[current_snippet_index]
       if !order
         query = self.line_up_matching_initials(downcased_query, current_snippet.initials)
         # bolded_matching_phrase = self.bold_the_matching_initials(current_snippet.snippet, sorted_downcased_initials, exact_match)
         # bolded_matching_phrase = self.bold_the_matching_initials(current_snippet.snippet, downcased_initials, exact_match)
       end
-
+ 
       song = Song.find(current_snippet.song_id)
       youtube_id = Song.get_youtube_id(song['full_title'])
       song_url = song['url']
