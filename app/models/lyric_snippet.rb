@@ -177,10 +177,7 @@ class LyricSnippet < ApplicationRecord
               # end
             end
       end
-
-      @current_snippets_array = final_snippets_array
     else
-      final_snippets_array = @current_snippets_array
       satisfied_artist_request = true
     end
 
