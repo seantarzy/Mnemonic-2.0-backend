@@ -121,7 +121,9 @@ class LyricSnippet < ApplicationRecord
     downcased_query = query.downcase
 
     downcased_initials = self.get_initials(downcased_query)
-    if fresh_search
+      if !fresh_search
+        satisfied_artist_request = true
+      end
       if order 
               if artist_id > 0
                   snippets_by_artist = Artist.find(artist_id).lyric_snippets
@@ -177,9 +179,7 @@ class LyricSnippet < ApplicationRecord
               # end
             end
       end
-    else
-      satisfied_artist_request = true
-    end
+   
 
             #save this array here, for we will come back to it if they decide to go to next result or previous result
       original_query = query
