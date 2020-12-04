@@ -18,7 +18,7 @@ This project is designed to create [acrostic mnemonic devices](https://citeseerx
 - Full auth
 
 ### Getting Started
-This project is created in conjunction with this [frontend](https://github.com/Jackmt9/mnemonic-maker-frontend). 
+This project is created in conjunction with this [frontend](https://github.com/seanytdawg/Mnemonic-2.0-front-end). 
 
 To start the backend server:
 1. Clone this repository.
