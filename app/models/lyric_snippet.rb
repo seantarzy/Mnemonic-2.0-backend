@@ -213,7 +213,6 @@ class LyricSnippet < ApplicationRecord
       song = song.attributes
       song['youtube_id'] = youtube_id 
       song["lyrics"] = lyrics
-      current_snippet_index += 1
       return {input_phrase: query, current_snippet_index: current_snippet_index, matching_phrase: current_snippet.snippet, song: song, original_query: original_query, order_matters: order, satisfied_artist_request: satisfied_artist_request} 
     else
       return {error: "no matching text"}
